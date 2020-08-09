@@ -1,15 +1,15 @@
-use std::fs::File;
-use std::collections::HashMap;
-use std::io::prelude::*;
 use byteorder::{ByteOrder, LittleEndian};
 use rand::seq::SliceRandom;
 use regex::Regex;
 use serenity::{
-    framework::standard::CommandError,
-    model::id::{ChannelId, GuildId, MessageId, RoleId, UserId},
-    model::channel::Message,
     client::Context,
+    framework::standard::CommandError,
+    model::channel::Message,
+    model::id::{ChannelId, GuildId, MessageId, RoleId, UserId},
 };
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::prelude::*;
 
 pub type IdResult<T> = Result<T, CommandError>;
 
@@ -42,14 +42,17 @@ pub fn arg_to_roleid(arg: &str, ctx: &Context, msg: &Message) -> IdResult<RoleId
         Err(_) => {
             // try converting name to id
             // FIXME: really dirty hack
-            let r = msg.guild(&ctx.cache).ok_or(CommandError(String::from("hell")))?;
+            let r = msg
+                .guild(&ctx.cache)
+                .ok_or(CommandError(String::from("hell")))?;
             let rr = r.read();
-            let m: HashMap<&str, &RoleId> = rr.roles.iter().map(|(a, b)| (b.name.as_str(), a)).collect();
-            match m.get(&arg) {
+            let m: HashMap<&str, &RoleId> =
+                rr.roles.iter().map(|(a, b)| (b.name.as_str(), a)).collect();
+            match m.get(arg) {
                 Some(id) => **id,
                 None => return Err(CommandError(format!("Cannot parse argument {}", arg))),
             }
-        },
+        }
     };
     Ok(id)
 }
@@ -64,14 +67,20 @@ pub fn arg_to_userid(arg: &str, ctx: &Context, msg: &Message) -> IdResult<UserId
         Err(_) => {
             // try converting name to id
             // FIXME: really dirty hack
-            let r = msg.guild(&ctx.cache).ok_or(CommandError(String::from("hell")))?;
+            let r = msg
+                .guild(&ctx.cache)
+                .ok_or(CommandError(String::from("hell")))?;
             let rr = r.read();
-            let m: HashMap<String, &UserId> = rr.members.iter().map(|(a, b)| (b.display_name().to_string(), a)).collect();
+            let m: HashMap<String, &UserId> = rr
+                .members
+                .iter()
+                .map(|(a, b)| (b.display_name().to_string(), a))
+                .collect();
             match m.get(arg) {
                 Some(id) => **id,
                 None => return Err(CommandError(format!("Cannot parse argument {}", arg))),
             }
-        },
+        }
     };
     Ok(id)
 }
@@ -146,11 +155,11 @@ pub fn get_role_pairs(guild: &GuildId) -> RolePairResult {
 
     for i in (0..tmp.len()).step_by(16) {
         let f = |n: usize| -> RoleId {
-            let id = LittleEndian::read_u64(&tmp[n..n+8]);
+            let id = LittleEndian::read_u64(&tmp[n..n + 8]);
             RoleId::from(id)
         };
         let a = f(i);
-        let b = f(i+8);
+        let b = f(i + 8);
         rp.push((a, b));
     }
 

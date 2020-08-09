@@ -1,12 +1,12 @@
+use crate::util;
 use serenity::{
     client::Context,
     framework::standard::{
         macros::{check, command, group},
-        Args, CheckResult, CommandOptions, CommandResult, CommandError,
+        Args, CheckResult, CommandError, CommandOptions, CommandResult,
     },
     model::channel::Message,
 };
-use crate::util;
 
 #[group]
 #[only_in(guilds)]
@@ -32,7 +32,10 @@ pub fn add_role_pair(ctx: &mut Context, msg: &Message, args: Args) -> CommandRes
     let raw_str = args.raw().collect::<Vec<&str>>();
     let rolepair = match raw_str.len() {
         0..=1 => return Err(CommandError(String::from("Missing arguments"))),
-        _ => (util::arg_to_roleid(raw_str[0], ctx, msg), util::arg_to_roleid(raw_str[1], ctx, msg)),
+        _ => (
+            util::arg_to_roleid(raw_str[0], ctx, msg),
+            util::arg_to_roleid(raw_str[1], ctx, msg),
+        ),
     };
     let gid = match msg.guild_id {
         Some(n) => n,
@@ -41,19 +44,29 @@ pub fn add_role_pair(ctx: &mut Context, msg: &Message, args: Args) -> CommandRes
     let rolepair = match rolepair {
         (Ok(a), Ok(b)) => (a, b),
         (Err(e), _) => {
-            msg.channel_id.say(&ctx.http, format!("Cannot recognize role \"{}\"", raw_str[0]))?;
+            msg.channel_id.say(
+                &ctx.http,
+                format!("Cannot recognize role \"{}\"", raw_str[0]),
+            )?;
             return Err(e);
-        },
+        }
         (_, Err(e)) => {
-            msg.channel_id.say(&ctx.http, format!("Cannot recognize role \"{}\"", raw_str[1]))?;
+            msg.channel_id.say(
+                &ctx.http,
+                format!("Cannot recognize role \"{}\"", raw_str[1]),
+            )?;
             return Err(e);
-        },
+        }
     };
 
     match util::add_one_role_pair(&gid, rolepair) {
         Ok(_) => {
-            msg.channel_id.say(&ctx.http, format!("Pair ({}, {}) added", rolepair.0, rolepair.1))?;
-            Ok(())},
+            msg.channel_id.say(
+                &ctx.http,
+                format!("Pair ({}, {}) added", rolepair.0, rolepair.1),
+            )?;
+            Ok(())
+        }
         Err(e) => Err(e),
     }
 }
@@ -71,7 +84,8 @@ pub fn random_auth_code(ctx: &mut Context, msg: &Message, args: Args) -> Command
         _ => raw_str[0],
     };
 
-    let reply_message = format!("寄給：\n\n\
+    let reply_message = format!(
+        "寄給：\n\n\
                                  {}\n\n\
                                  標題：\n\n\
                                  副本找團區認證信\n\n\
@@ -80,8 +94,8 @@ pub fn random_auth_code(ctx: &mut Context, msg: &Message, args: Args) -> Command
                                  {}\n\
                                  直接貼到認證區就行了
                                  ",
-                                auth_account_name,
-                                code);
+        auth_account_name, code
+    );
 
     if let Err(why) = msg.channel_id.say(&ctx.http, &reply_message) {
         eprintln!("Error sending message: {:?}", why);

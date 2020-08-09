@@ -31,14 +31,19 @@ pub fn convert_role(ctx: &mut Context, msg: &Message, args: Args) -> CommandResu
             .filter(|x| x != &RoleId::from(0))
             .collect(),
     };
-    let _t: HashMap<_, _> = msg.guild(&ctx.cache).ok_or(CommandError(String::from("hell")))?.read().roles.iter().map(|(a, b)| (&b.name, a)).collect();
+    let _t: HashMap<_, _> = msg
+        .guild(&ctx.cache)
+        .ok_or(CommandError(String::from("hell")))?
+        .read()
+        .roles
+        .iter()
+        .map(|(a, b)| (&b.name, a))
+        .collect();
     match raw_str.len() {
         0 => (),
-        _ => {
-            match util::arg_to_roleid(raw_str[0], ctx, msg) {
-                Ok(_) => (),
-                Err(e) => eprintln!("msg: {:?}, content: {}", e, raw_str[0]),
-            }
+        _ => match util::arg_to_roleid(raw_str[0], ctx, msg) {
+            Ok(_) => (),
+            Err(e) => eprintln!("msg: {:?}, content: {}", e, raw_str[0]),
         },
     };
     let gid = match msg.guild_id {
@@ -81,7 +86,14 @@ pub fn convert_role(ctx: &mut Context, msg: &Message, args: Args) -> CommandResu
     user.add_roles(&ctx.http, &to_add)?;
     user.remove_roles(&ctx.http, &to_rm)?;
 
-    let reply_message = format!("Roles have been changed to {}", if any {"mentionable"} else {"not mentionable"});
+    let reply_message = format!(
+        "Roles have been changed to {}",
+        if any {
+            "mentionable"
+        } else {
+            "not mentionable"
+        }
+    );
 
     if let Err(why) = msg.channel_id.say(&ctx.http, &reply_message) {
         eprintln!("Error sending message: {:?}", why);
