@@ -1,7 +1,4 @@
 // File: main.rs
-// TODO: split commands into different files
-
-extern crate dotenv;
 
 use dotenv::dotenv;
 
@@ -10,33 +7,15 @@ use std::{
 };
 
 use serenity::{
-    model::{channel::Message, gateway::Ready},
-    prelude::*,
-    // utils::MessageBuilder,
-    framework::standard::{
-        StandardFramework, Args, CommandOptions,
-        CheckResult, CommandResult,
-        macros::{command, group, help, check},
-    },
+    model::gateway::Ready,
+    client::{Context, EventHandler, Client},
+    framework::standard::StandardFramework,
 };
 
-#[group]
-#[commands(ping)]
-struct General;
-
-#[group]
-#[prefixes("test")]
-#[description = "Message Test"]
-#[default_command(random_message)]
-#[commands(dm, mention_me)]
-struct Test;
-
-#[group]
-#[owners_only]
-// Limit command to be guild-restricted.
-#[only_in(guilds)]
-#[commands(shutdown)]
-struct Owner;
+use fnd::{
+    admin::*,
+    member::*,
+};
 
 struct Handler;
 
@@ -73,7 +52,7 @@ fn main() {
                                      .prefix("!")
                                      .owners(owners))
                           // Command execution
-                          .before(|ctx, msg, command_name| {
+                          .before(|_ctx, msg, command_name| {
                               println!("Got command '{}' by user '{}'", command_name, msg.author.name);
                               true
                           })
@@ -93,74 +72,10 @@ fn main() {
                           // TODO: help message
                           // .help(&NOTHING_HELP)
                           // set groups
-                          .group(&GENERAL_GROUP)
-                          .group(&TEST_GROUP)
-                          .group(&OWNER_GROUP));
+                          .group(&MEMBER_GROUP)
+                          .group(&ADMIN_GROUP));
 
     if let Err(why) = client.start() {
         println!("Client error: {:?}", why);
     }
-}
-
-#[command]
-fn ping(ctx: &mut Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "Pong!");
-
-    Ok(())
-}
-
-#[command]
-fn random_message(ctx: &mut Context, msg: &Message) -> CommandResult {
-    // TODO: send a random/static message to channel without mention anyone
-
-    Ok(())
-}
-
-#[command]
-fn dm(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let dm = msg.author.dm(&ctx, |m| {
-        m.content("安安");
-
-        m
-    });
-
-    if let Err(why) = dm {
-        println!("Error when direct messaging user: {:?}", why);
-    }
-
-    Ok(())
-}
-
-#[command]
-fn mention_me(ctx: &mut Context, msg: &Message) -> CommandResult {
-    // TODO: mention the original author
-
-    Ok(())
-}
-
-#[command]
-fn shutdown(ctx: &mut Context, msg: &Message) -> CommandResult {
-    // TODO: find a way to shutdown this bot with command
-
-    let _ = msg.reply(&ctx, "Shutting down!");
-
-    Ok(())
-}
-
-#[check]
-#[name = "Owner"]
-fn owner_check(_: &mut Context, msg: &Message, _: &mut Args, _: &CommandOptions) -> CheckResult {
-    (msg.author.id == 273036229531009024).into()
-}
-
-#[check]
-#[name = "Admin"]
-fn admin_check(ctx: &mut Context, msg: &Message, _: &mut Args, _: &CommandOptions) -> CheckResult {
-    if let Some(member) = msg.member(&ctx.cache) {
-        if let Ok(permissions)= member.permissions(&ctx.cache) {
-            return permissions.administrator().into();
-        }
-    }
-
-    false.into()
 }
